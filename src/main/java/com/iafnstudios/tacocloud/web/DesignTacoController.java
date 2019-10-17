@@ -5,8 +5,10 @@ import com.iafnstudios.tacocloud.Ingredient;
 import com.iafnstudios.tacocloud.Ingredient.Type;
 import com.iafnstudios.tacocloud.Order;
 import com.iafnstudios.tacocloud.Taco;
+import com.iafnstudios.tacocloud.User;
 import com.iafnstudios.tacocloud.data.IngredientRepository;
 import com.iafnstudios.tacocloud.data.TacoRepository;
+import com.iafnstudios.tacocloud.data.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -15,6 +17,7 @@ import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,12 +28,13 @@ import java.util.stream.Collectors;
 @RequestMapping("/design")
 public class DesignTacoController {
 
-
+    private final UserRepository userRepo;
     private final IngredientRepository ingredientRepo;
-    private TacoRepository designRepo;
+    private final TacoRepository designRepo;
 
     @Autowired
-    public DesignTacoController(IngredientRepository ingredientRepository, TacoRepository designRepo) {
+    public DesignTacoController(UserRepository userRepo, IngredientRepository ingredientRepository, TacoRepository designRepo) {
+        this.userRepo = userRepo;
         this.ingredientRepo = ingredientRepository;
         this.designRepo = designRepo;
     }
@@ -49,7 +53,7 @@ public class DesignTacoController {
 
     //tag::showDesignForm[]
     @GetMapping
-    public String showDesignForm(Model model) {
+    public String showDesignForm(Model model, Principal principal) {
         List<Ingredient> ingredients = new ArrayList<>();
         ingredientRepo.findAll().forEach(i -> ingredients.add(i));
         Type[] types = Ingredient.Type.values();
@@ -57,6 +61,11 @@ public class DesignTacoController {
             model.addAttribute(type.toString().toLowerCase(),
                     filterByType(ingredients, type));
         }
+
+        String username = principal.getName();
+        User user = userRepo.findByUsername(username);
+        model.addAttribute("user",user);
+
         log.info("Inside showDesignForm");
         return "design";
     }
